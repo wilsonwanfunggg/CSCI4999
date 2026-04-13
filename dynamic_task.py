@@ -166,9 +166,17 @@ def save_diagnostic_snapshot(rgb_image, heatmap, vector, prompt, output_dir, cou
         rx = -vector[1]
         ry = vector[0]
 
-        end_x = int(cx + rx * 200) 
-        end_y = int(cy - ry * 200) 
-        cv2.arrowedLine(vis, (cx, cy), (end_x, end_y), (255, 255, 255), 3, tipLength=0.3)
+        # 1. Normalize the vector first so the arrow is always a consistent, readable length!
+        norm = np.linalg.norm([rx, ry])
+        if norm > 1e-5:
+            rx, ry = rx / norm, ry / norm
+
+        # 2. Multiply by 30 pixels (instead of 200)
+        end_x = int(cx + rx * 30) 
+        end_y = int(cy - ry * 30) 
+        
+        # 3. Change thickness from 3 to 1, and tipLength from 0.3 to 0.4 for a cleaner look
+        cv2.arrowedLine(vis, (int(cx), int(cy)), (int(end_x), int(end_y)), (255, 255, 255), 1, tipLength=0.4)
         slug = "".join(c for c in prompt if c.isalnum() or c in (" ", "_")).rstrip().replace(" ", "_")[:30]
         cv2.imwrite(os.path.join(output_dir, f"{counter:04d}_{slug}.png"), vis)
     except: pass
